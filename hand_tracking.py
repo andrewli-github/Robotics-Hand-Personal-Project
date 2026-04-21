@@ -1,22 +1,22 @@
 import cv2
 import mediapipe as mp
 import socket  
-import math
+import mat
 
-# 1. Set up the new Tasks API shortcuts
+# API shortcuts
 BaseOptions = mp.tasks.BaseOptions
 HandLandmarker = mp.tasks.vision.HandLandmarker
 HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
 VisionRunningMode = mp.tasks.vision.RunningMode
 
-# 2. Configure options
+# Configuraiton
 options = HandLandmarkerOptions(
     base_options=BaseOptions(model_asset_path='hand_landmarker.task'),
     running_mode=VisionRunningMode.IMAGE, 
     num_hands=1
 )
 
-# --- UNITY BROADCAST SETUP (Ignored for now) ---
+# Unity Broadcast
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 serverAddressPort = ("127.0.0.1", 5052)
 
@@ -49,16 +49,15 @@ with HandLandmarker.create_from_options(options) as landmarker:
         
         if result.hand_landmarks and result.hand_world_landmarks:
             
-            # --- UNITY BROADCAST LOOP (Commented out for now) ---
-            # world_points = result.hand_world_landmarks[0]
-            # data_to_send = []
-            # for landmark in world_points:
-            #     data_to_send.append(landmark.x * 100)
-            #     data_to_send.append(-landmark.y * 100)
-            #     data_to_send.append(-landmark.z * 100)
-            # message = ",".join(map(str, data_to_send))
-            # sock.sendto(message.encode(), serverAddressPort)
-            # ---------------------------------------------------
+            # Unity broadcast loop
+             world_points = result.hand_world_landmarks[0]
+             data_to_send = []
+             for landmark in world_points:
+                 data_to_send.append(landmark.x * 100)
+                 data_to_send.append(-landmark.y * 100)
+                 data_to_send.append(-landmark.z * 100)
+            message = ",".join(map(str, data_to_send))
+            sock.sendto(message.encode(), serverAddressPort)
 
             for hand_points in result.hand_landmarks:
                 points = []
@@ -79,7 +78,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
                     cx, cy = smoothed_cx, smoothed_cy
                     points.append((cx, cy)) 
                     
-                    # --- OUR X, Y, Z TRACKING LOGIC ---
+                    # Coordinate system tracking logic
                     if idx == 9:
                         cv2.circle(frame, (cx, cy), 8, (0, 0, 255), cv2.FILLED)
                         
